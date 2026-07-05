@@ -22,7 +22,7 @@ class ProsesCuci extends BaseController
                             ->select('transaksi.*, members.nama as member_nama, members.telepon as member_telepon')
                             ->join('members', 'members.id = transaksi.member_id')
                             ->whereIn('transaksi.status', ['Cuci', 'Dalam Proses'])
-                            ->orderBy('transaksi.updated_at', 'ASC')
+                            ->orderBy('transaksi.no_antrian', 'ASC')
                             ->get()->getResultArray();
 
         foreach ($activeWashing as &$tx) {

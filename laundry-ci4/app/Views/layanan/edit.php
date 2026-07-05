@@ -21,7 +21,7 @@
           </div>
         </div>
 
-        <form action="<?= base_url('layanan/update/' . $layanan['id']) ?>" method="POST">
+        <form action="<?= base_url('layanan/update/' . $layanan['id']) ?>" method="POST" enctype="multipart/form-data">
           <?= csrf_field() ?>
 
           
@@ -90,6 +90,17 @@
             <?php if (isset($validation['estimasi_waktu'])) : ?>
               <div class="invalid-feedback"><?= $validation['estimasi_waktu'] ?></div>
             <?php endif; ?>
+          </div>
+
+          <div class="mb-3">
+            <label for="gambar" class="form-label fw-semibold text-dark">Gambar Layanan (Opsional)</label>
+            <?php if (!empty($layanan['gambar']) && file_exists(ROOTPATH . 'public/uploads/layanan/' . $layanan['gambar'])) : ?>
+              <div class="mb-2">
+                <img src="<?= base_url('uploads/layanan/' . $layanan['gambar']) ?>" alt="Gambar Layanan" class="img-thumbnail rounded" style="max-height: 120px;">
+              </div>
+            <?php endif; ?>
+            <input type="file" name="gambar" class="form-control" id="gambar" accept="image/*">
+            <div class="form-text text-muted">Format file yang diperbolehkan: JPG, JPEG, PNG. Biarkan kosong jika tidak ingin mengubah gambar.</div>
           </div>
 
           

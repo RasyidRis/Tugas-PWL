@@ -10,14 +10,15 @@ class LayananLaundryModel extends Model
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
-    protected $useSoftDeletes   = false;
+    protected $useSoftDeletes   = true;
     protected $protectFields    = true;
     protected $allowedFields    = [
         'nama_layanan',
         'tipe_satuan',
         'harga',
         'estimasi_waktu',
-        'deskripsi'
+        'deskripsi',
+        'gambar'
     ];
 
     
@@ -25,6 +26,7 @@ class LayananLaundryModel extends Model
     protected $dateFormat    = 'datetime';
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
+    protected $deletedField  = 'deleted_at';
 
     
     protected $validationRules      = [
@@ -33,6 +35,7 @@ class LayananLaundryModel extends Model
         'harga'          => 'required|integer|greater_than_equal_to[0]',
         'estimasi_waktu' => 'required|min_length[2]|max_length[50]',
         'deskripsi'      => 'permit_empty|string',
+        'gambar'         => 'permit_empty|string',
     ];
     
     protected $validationMessages   = [

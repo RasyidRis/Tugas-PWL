@@ -21,7 +21,7 @@
           </div>
         </div>
 
-        <form action="<?= base_url('layanan/simpan') ?>" method="POST">
+        <form action="<?= base_url('layanan/simpan') ?>" method="POST" enctype="multipart/form-data">
           <?= csrf_field() ?>
 
           
@@ -90,6 +90,12 @@
             <?php if (isset($validation['estimasi_waktu'])) : ?>
               <div class="invalid-feedback"><?= $validation['estimasi_waktu'] ?></div>
             <?php endif; ?>
+          </div>
+
+          <div class="mb-3">
+            <label for="gambar" class="form-label fw-semibold text-dark">Gambar Layanan (Opsional)</label>
+            <input type="file" name="gambar" class="form-control" id="gambar" accept="image/*">
+            <div class="form-text text-muted">Format file yang diperbolehkan: JPG, JPEG, PNG.</div>
           </div>
 
           

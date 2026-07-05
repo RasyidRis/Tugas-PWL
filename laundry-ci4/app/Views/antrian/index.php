@@ -83,6 +83,9 @@
                   <div class="d-flex flex-column">
                     <span class="text-dark fw-semibold fs-4"><?= esc($item['member_nama']) ?></span>
                     <small class="text-muted fs-2"><?= esc($item['member_telepon']) ?></small>
+                    <?php if (!empty($item['member_alamat']) && $item['member_alamat'] !== '-') : ?>
+                      <span class="text-muted fs-2 text-wrap" style="max-width: 180px;"><iconify-icon icon="solar:map-point-line-duotone" class="align-middle me-0.5"></iconify-icon><?= esc($item['member_alamat']) ?></span>
+                    <?php endif; ?>
                   </div>
                 </td>
                 <td class="border-bottom-0">
@@ -164,36 +167,24 @@
                       <iconify-icon icon="solar:user-rounded-bold-duotone" class="fs-6"></iconify-icon>
                     </div>
                     <div>
-                      <h6 class="card-title fw-bold text-dark mb-0">1. Pilih Pelanggan (Member)</h6>
+                      <h6 class="card-title fw-bold text-dark mb-0">1. Data Pelanggan</h6>
                     </div>
                   </div>
 
-                  <div class="mb-3">
-                    <label for="member_id" class="form-label fw-semibold text-dark">Nama Pelanggan <span class="text-danger">*</span></label>
-                    <select name="member_id" id="member_id" class="form-select" required>
-                      <option value="" disabled selected>-- Pilih Member --</option>
-                      <option value="new_customer" <?= old('member_id') == 'new_customer' ? 'selected' : '' ?>>+ Pelanggan Baru (Non-Member)</option>
-                      <?php foreach ($members as $m) : ?>
-                        <option value="<?= $m['id'] ?>">
-                          <?= esc($m['nama']) ?> (<?= esc($m['telepon']) ?>) - Poin: <?= esc($m['poin']) ?>
-                        </option>
-                      <?php endforeach; ?>
-                    </select>
-                    <div class="form-text text-muted mt-2">
-                      Pelanggan belum terdaftar? <a href="<?= base_url('member') ?>" class="text-primary fw-semibold">Daftarkan Member Baru</a>
-                    </div>
-                  </div>
+                  <input type="hidden" name="member_id" value="new_customer">
 
-                  
-                  <div id="new_customer_fields" class="p-3 bg-light rounded-3 mb-3 d-none border">
-                    <h6 class="fw-bold text-dark mb-3"><iconify-icon icon="solar:user-plus-bold-duotone" class="text-primary align-middle me-1"></iconify-icon> Data Pelanggan Baru</h6>
+                  <div id="new_customer_fields" class="p-3 bg-light rounded-3 mb-3 border">
                     <div class="mb-3">
                       <label for="customer_name" class="form-label fw-semibold text-dark">Nama Lengkap <span class="text-danger">*</span></label>
-                      <input type="text" name="customer_name" id="customer_name" class="form-control" placeholder="Contoh: Budi Santoso" value="<?= old('customer_name') ?>">
+                      <input type="text" name="customer_name" id="customer_name" class="form-control" placeholder="Contoh: Budi Santoso" value="<?= old('customer_name') ?>" required>
                     </div>
-                    <div class="mb-0">
+                    <div class="mb-3">
                       <label for="customer_phone" class="form-label fw-semibold text-dark">No. Telepon / HP</label>
                       <input type="text" name="customer_phone" id="customer_phone" class="form-control" placeholder="Contoh: 081234567890" value="<?= old('customer_phone') ?>">
+                    </div>
+                    <div class="mb-0">
+                      <label for="customer_address" class="form-label fw-semibold text-dark">Alamat</label>
+                      <textarea name="customer_address" id="customer_address" class="form-control" rows="2" placeholder="Contoh: Jl. Merdeka No. 10"><?= old('customer_address') ?></textarea>
                     </div>
                   </div>
                 </div>
@@ -288,26 +279,18 @@
     const textTotal = document.getElementById('textTotal');
     const bayarInput = document.getElementById('bayar');
 
-    // New Customer Handler inside Modal
-    const memberSelect = document.getElementById('member_id');
-    const newCustomerFields = document.getElementById('new_customer_fields');
-    const customerNameInput = document.getElementById('customer_name');
-
-    function toggleNewCustomerFields() {
-      if (memberSelect.value === 'new_customer') {
-        newCustomerFields.classList.remove('d-none');
-        customerNameInput.required = true;
-      } else {
-        newCustomerFields.classList.add('d-none');
-        customerNameInput.required = false;
+    // Reset modal when hidden (cancel/close)
+    const tambahAntrianModal = document.getElementById('tambahAntrianModal');
+    tambahAntrianModal.addEventListener('hidden.bs.modal', function () {
+      const orderForm = document.getElementById('orderForm');
+      if (orderForm) {
+        orderForm.reset();
       }
-    }
-
-    memberSelect.addEventListener('change', toggleNewCustomerFields);
-    toggleNewCustomerFields();
+      cartItems.innerHTML = '';
+      textTotal.textContent = 'Rp0';
+    });
 
     // Add first row by default when modal shows
-    const tambahAntrianModal = document.getElementById('tambahAntrianModal');
     tambahAntrianModal.addEventListener('shown.bs.modal', function () {
       if (cartItems.children.length === 0) {
         addNewRow();

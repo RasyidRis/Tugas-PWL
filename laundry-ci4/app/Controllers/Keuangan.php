@@ -11,6 +11,12 @@ class Keuangan extends BaseController
     public function __construct()
     {
         $this->keuanganModel = new KeuanganModel();
+        
+        // Blokir Kasir dari Keuangan
+        if (session()->get('role') !== 'admin') {
+            header('Location: ' . base_url('/'));
+            exit;
+        }
     }
 
     public function index()

@@ -96,15 +96,28 @@ class LayananLaundry extends BaseController
     
     public function simpan()
     {
+        $fileGambar = $this->request->getFile('gambar');
+        $gambarName = null;
+
+        if ($fileGambar && $fileGambar->isValid() && !$fileGambar->hasMoved()) {
+            $gambarName = $fileGambar->getRandomName();
+            $fileGambar->move(ROOTPATH . 'public/uploads/layanan', $gambarName);
+        }
+
         $data = [
             'nama_layanan'   => $this->request->getPost('nama_layanan'),
             'tipe_satuan'    => $this->request->getPost('tipe_satuan'),
             'harga'          => $this->request->getPost('harga'),
             'estimasi_waktu' => $this->request->getPost('estimasi_waktu'),
             'deskripsi'      => $this->request->getPost('deskripsi'),
+            'gambar'         => $gambarName
         ];
 
         if (!$this->layananModel->insert($data)) {
+            // Delete uploaded file if DB insert fails
+            if ($gambarName && file_exists(ROOTPATH . 'public/uploads/layanan/' . $gambarName)) {
+                unlink(ROOTPATH . 'public/uploads/layanan/' . $gambarName);
+            }
             return redirect()->back()->withInput()->with('validation', $this->layananModel->errors())->with('modal_open', 'tambah_layanan');
         }
 
@@ -138,12 +151,25 @@ class LayananLaundry extends BaseController
             throw PageNotFoundException::forPageNotFound("Layanan laundry dengan ID {$id} tidak ditemukan.");
         }
 
+        $fileGambar = $this->request->getFile('gambar');
+        $gambarName = $layanan['gambar'];
+
+        if ($fileGambar && $fileGambar->isValid() && !$fileGambar->hasMoved()) {
+            // Delete old file if exists
+            if (!empty($layanan['gambar']) && file_exists(ROOTPATH . 'public/uploads/layanan/' . $layanan['gambar'])) {
+                unlink(ROOTPATH . 'public/uploads/layanan/' . $layanan['gambar']);
+            }
+            $gambarName = $fileGambar->getRandomName();
+            $fileGambar->move(ROOTPATH . 'public/uploads/layanan', $gambarName);
+        }
+
         $data = [
             'nama_layanan'   => $this->request->getPost('nama_layanan'),
             'tipe_satuan'    => $this->request->getPost('tipe_satuan'),
             'harga'          => $this->request->getPost('harga'),
             'estimasi_waktu' => $this->request->getPost('estimasi_waktu'),
             'deskripsi'      => $this->request->getPost('deskripsi'),
+            'gambar'         => $gambarName
         ];
 
         if (!$this->layananModel->update($id, $data)) {
@@ -162,8 +188,35 @@ class LayananLaundry extends BaseController
             throw PageNotFoundException::forPageNotFound("Layanan laundry dengan ID {$id} tidak ditemukan.");
         }
 
+        // Delete image if exists
+        if (!empty($layanan['gambar']) && file_exists(ROOTPATH . 'public/uploads/layanan/' . $layanan['gambar'])) {
+            unlink(ROOTPATH . 'public/uploads/layanan/' . $layanan['gambar']);
+        }
+
         $this->layananModel->delete($id);
 
         return redirect()->to('layanan')->with('success', 'Layanan laundry berhasil dihapus!');
+    }
+
+    public function cetakPdf()
+    {
+        $layananList = $this->layananModel->orderBy('nama_layanan', 'ASC')->findAll();
+
+        $data = [
+            'layanan' => $layananList
+        ];
+
+        $html = view('layanan/pdf_template', $data);
+
+        $dompdf = new \Dompdf\Dompdf();
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        // Output PDF to browser
+        $dompdf->stream("daftar-layanan-laundry.pdf", [
+            "Attachment" => false
+        ]);
+        exit;
     }
 }

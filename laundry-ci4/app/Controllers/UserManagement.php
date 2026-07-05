@@ -12,6 +12,12 @@ class UserManagement extends BaseController
     public function __construct()
     {
         $this->userModel = new UserModel();
+        
+        // Blokir Kasir dari User Management
+        if (session()->get('role') !== 'admin') {
+            header('Location: ' . base_url('/'));
+            exit;
+        }
     }
 
     public function index()
@@ -98,7 +104,10 @@ class UserManagement extends BaseController
         }
 
         if (!$this->validate($rules)) {
-            return redirect()->back()->withInput()->with('validation', $this->validator->getErrors());
+            return redirect()->back()->withInput()
+                             ->with('validation', $this->validator->getErrors())
+                             ->with('modal_open', 'edit_user')
+                             ->with('edit_id', $id);
         }
 
         $updateData = [

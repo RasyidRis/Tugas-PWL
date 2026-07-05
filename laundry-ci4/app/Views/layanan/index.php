@@ -115,6 +115,10 @@
             <?php endif; ?>
           </div>
         </form>
+        <a href="<?= base_url('layanan/pdf') ?>" target="_blank" class="btn btn-danger d-flex align-items-center gap-2">
+          <iconify-icon icon="solar:document-text-bold-duotone" class="fs-5"></iconify-icon>
+          Cetak PDF
+        </a>
         <button type="button" class="btn btn-primary d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#tambahLayananModal">
           <iconify-icon icon="solar:add-circle-bold-duotone" class="fs-5"></iconify-icon>
           Tambah Layanan
@@ -128,6 +132,9 @@
           <tr>
             <th class="border-bottom-0">
               <h6 class="fw-semibold mb-0">No</h6>
+            </th>
+            <th class="border-bottom-0">
+              <h6 class="fw-semibold mb-0">Gambar</h6>
             </th>
             <th class="border-bottom-0">
               <h6 class="fw-semibold mb-0">Nama Layanan</h6>
@@ -157,6 +164,15 @@
                   <h6 class="fw-semibold mb-0"><?= $no++ ?></h6>
                 </td>
                 <td class="border-bottom-0">
+                  <?php if (!empty($item['gambar']) && file_exists(ROOTPATH . 'public/uploads/layanan/' . $item['gambar'])) : ?>
+                    <img src="<?= base_url('uploads/layanan/' . $item['gambar']) ?>" alt="<?= esc($item['nama_layanan']) ?>" class="rounded-3 shadow-sm border" style="width: 72px; height: 72px; object-fit: cover;">
+                  <?php else : ?>
+                    <div class="bg-light rounded-3 d-flex align-items-center justify-content-center text-muted border" style="width: 72px; height: 72px;">
+                      <iconify-icon icon="solar:camera-broken" class="fs-7"></iconify-icon>
+                    </div>
+                  <?php endif; ?>
+                </td>
+                <td class="border-bottom-0">
                   <h6 class="fw-semibold mb-1 text-dark"><?= esc($item['nama_layanan']) ?></h6>
                 </td>
                 <td class="border-bottom-0">
@@ -180,9 +196,20 @@
                 </td>
                 <td class="border-bottom-0 text-center">
                   <div class="d-flex align-items-center justify-content-center gap-2">
-                    <a href="<?= base_url('layanan/edit/' . $item['id']) ?>" class="btn btn-sm btn-outline-warning d-flex align-items-center justify-content-center p-2" title="Edit">
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-warning d-flex align-items-center justify-content-center p-2 btn-edit" 
+                            data-id="<?= $item['id'] ?>"
+                            data-name="<?= esc($item['nama_layanan']) ?>"
+                            data-unit="<?= esc($item['tipe_satuan']) ?>"
+                            data-price="<?= esc($item['harga']) ?>"
+                            data-estimation="<?= esc($item['estimasi_waktu']) ?>"
+                            data-desc="<?= esc($item['deskripsi'] ?? '') ?>"
+                            data-image="<?= esc($item['gambar'] ?? '') ?>"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#editLayananModal" 
+                            title="Edit">
                       <iconify-icon icon="solar:pen-bold-duotone" class="fs-4"></iconify-icon>
-                    </a>
+                    </button>
                     <button type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center p-2 btn-delete" 
                             data-id="<?= $item['id'] ?>" 
                             data-name="<?= esc($item['nama_layanan']) ?>" 
@@ -244,7 +271,7 @@
         <h5 class="modal-title fw-bold text-dark" id="tambahLayananModalLabel">Tambah Layanan Baru</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <form action="<?= base_url('layanan/simpan') ?>" method="POST">
+      <form action="<?= base_url('layanan/simpan') ?>" method="POST" enctype="multipart/form-data">
         <?= csrf_field() ?>
         <div class="modal-body">
           
@@ -315,6 +342,12 @@
             <?php endif; ?>
           </div>
 
+          <div class="mb-3">
+            <label for="gambar" class="form-label fw-semibold text-dark">Gambar Layanan (Opsional)</label>
+            <input type="file" name="gambar" class="form-control" id="gambar" accept="image/*">
+            <div class="form-text text-muted">Format file yang diperbolehkan: JPG, JPEG, PNG.</div>
+          </div>
+
           
           <div class="mb-0">
             <label for="deskripsi" class="form-label fw-semibold text-dark">Deskripsi Layanan (Opsional)</label>
@@ -339,9 +372,93 @@
     </div>
   </div>
 </div>
+<!-- Modal Edit Layanan -->
+<div class="modal fade" id="editLayananModal" tabindex="-1" aria-labelledby="editLayananModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-3">
+      <div class="modal-header border-bottom-0 pb-0">
+        <h5 class="modal-title fw-bold text-dark" id="editLayananModalLabel">Edit Layanan Laundry</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="" method="POST" id="editLayananForm" enctype="multipart/form-data">
+        <?= csrf_field() ?>
+        <div class="modal-body">
+          
+          <div class="mb-3">
+            <label for="nama_layanan_edit" class="form-label fw-semibold text-dark">Nama Layanan <span class="text-danger">*</span></label>
+            <input type="text" 
+                   name="nama_layanan" 
+                   class="form-control" 
+                   id="nama_layanan_edit" 
+                   placeholder="Contoh: Cuci Kering & Setrika Kemeja" 
+                   required>
+          </div>
+
+          <div class="row">
+            
+            <div class="col-md-6 mb-3">
+              <label for="tipe_satuan_edit" class="form-label fw-semibold text-dark">Tipe Satuan <span class="text-danger">*</span></label>
+              <select name="tipe_satuan" class="form-select" id="tipe_satuan_edit" required>
+                <option value="" disabled>-- Pilih Satuan --</option>
+                <option value="Kg">Kg (Kilogram)</option>
+                <option value="Pcs">Pcs (Satuan)</option>
+                <option value="Meter">Meter (Karpet/Gordyn)</option>
+              </select>
+            </div>
+
+            
+            <div class="col-md-6 mb-3">
+              <label for="harga_edit" class="form-label fw-semibold text-dark">Harga (Rp) <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text bg-light text-dark fw-semibold">Rp</span>
+                <input type="number" name="harga" class="form-control" id="harga_edit" min="0" required>
+              </div>
+            </div>
+          </div>
+
+          
+          <div class="mb-3">
+            <label for="estimasi_waktu_edit" class="form-label fw-semibold text-dark">Estimasi Waktu Pengerjaan <span class="text-danger">*</span></label>
+            <input type="text" 
+                   name="estimasi_waktu" 
+                   class="form-control" 
+                   id="estimasi_waktu_edit" 
+                   placeholder="Contoh: 2 Hari, 24 Jam, 6 Jam (Express)" 
+                   required>
+          </div>
+
+          <div class="mb-3">
+            <label for="gambar_edit" class="form-label fw-semibold text-dark">Gambar Layanan (Opsional)</label>
+            <div id="edit_image_preview"></div>
+            <input type="file" name="gambar" class="form-control" id="gambar_edit" accept="image/*">
+            <div class="form-text text-muted">Format file yang diperbolehkan: JPG, JPEG, PNG. Biarkan kosong jika tidak ingin mengubah gambar.</div>
+          </div>
+
+          
+          <div class="mb-0">
+            <label for="deskripsi_edit" class="form-label fw-semibold text-dark">Deskripsi Layanan (Opsional)</label>
+            <textarea name="deskripsi" 
+                      class="form-control" 
+                      id="deskripsi_edit" 
+                      rows="4" 
+                      placeholder="Masukkan detail penjelasan mengenai layanan laundry ini..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-top-0 pt-0">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-warning d-flex align-items-center gap-1 text-white">
+            <iconify-icon icon="solar:diskette-bold-duotone" class="fs-5"></iconify-icon>
+            Perbarui Layanan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
+    // Delete handler
     const deleteButtons = document.querySelectorAll('.btn-delete');
     const deleteForm = document.getElementById('deleteForm');
     const deleteServiceName = document.getElementById('deleteServiceName');
@@ -356,10 +473,57 @@
       });
     });
 
+    // Edit handler
+    const editButtons = document.querySelectorAll('.btn-edit');
+    const editForm = document.getElementById('editLayananForm');
+    const namaLayananEdit = document.getElementById('nama_layanan_edit');
+    const tipeSatuanEdit = document.getElementById('tipe_satuan_edit');
+    const hargaEdit = document.getElementById('harga_edit');
+    const estimasiWaktuEdit = document.getElementById('estimasi_waktu_edit');
+    const deskripsiEdit = document.getElementById('deskripsi_edit');
+
+    editButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const id = this.getAttribute('data-id');
+        const name = this.getAttribute('data-name');
+        const unit = this.getAttribute('data-unit');
+        const price = this.getAttribute('data-price');
+        const estimation = this.getAttribute('data-estimation');
+        const desc = this.getAttribute('data-desc');
+        const image = this.getAttribute('data-image');
+
+        namaLayananEdit.value = name;
+        tipeSatuanEdit.value = unit;
+        hargaEdit.value = price;
+        estimasiWaktuEdit.value = estimation;
+        deskripsiEdit.value = desc;
+
+        const previewContainer = document.getElementById('edit_image_preview');
+        if (image && image !== '') {
+            previewContainer.innerHTML = `<div class="mb-2"><img src="<?= base_url('uploads/layanan') ?>/${image}" class="img-thumbnail rounded" style="max-height: 80px;"></div>`;
+        } else {
+            previewContainer.innerHTML = '';
+        }
+
+        editForm.setAttribute('action', '<?= base_url('layanan/update') ?>/' + id);
+      });
+    });
+
     // Auto-show add modal on validation error
     <?php if (session()->getFlashdata('modal_open') === 'tambah_layanan') : ?>
       const myModal = new bootstrap.Modal(document.getElementById('tambahLayananModal'));
       myModal.show();
+    <?php endif; ?>
+
+    // Auto-show edit modal on validation error
+    <?php if (session()->getFlashdata('modal_open') === 'edit_layanan') : ?>
+      const editModal = new bootstrap.Modal(document.getElementById('editLayananModal'));
+      const failedId = '<?= session()->getFlashdata('edit_id') ?>';
+      const button = document.querySelector(`.btn-edit[data-id="${failedId}"]`);
+      if (button) {
+        button.click();
+      }
+      editModal.show();
     <?php endif; ?>
   });
 </script>

@@ -7,9 +7,11 @@
     <iconify-icon icon="solar:arrow-left-line-duotone" class="fs-5"></iconify-icon>
     Kembali ke Antrian
   </a>
-  <button onclick="window.print()" class="btn btn-primary d-inline-flex align-items-center gap-1">
-    <iconify-icon icon="solar:printer-bold-duotone" class="fs-5"></iconify-icon> Cetak Nota
-  </button>
+  <div class="d-flex gap-2">
+    <a href="<?= base_url('antrian/pdf/' . $transaksi['id']) ?>" target="_blank" class="btn btn-danger d-inline-flex align-items-center gap-1">
+      <iconify-icon icon="solar:document-text-bold" class="fs-5"></iconify-icon> Unduh PDF Nota
+    </a>
+  </div>
 </div>
 
 <?php if (session()->getFlashdata('success')) : ?>
@@ -41,9 +43,8 @@
         
         <div class="row border-bottom pb-4 mb-4">
           <div class="col-md-6 mb-3 mb-md-0">
-            <h4 class="fw-bold text-primary mb-1">Clean • Fresh • Shine</h4>
-            <p class="text-muted fs-2 mb-0">Ruko Clean & Fresh, Kav 5-6</p>
-            <p class="text-muted fs-2">Telp: 0812-3456-7890 | Email: clean@freshlaundry.com</p>
+            <h4 class="fw-bold text-dark mb-0">Sparkle Laundry</h4>
+            <div class="text-primary fw-semibold fs-2 mb-2">Clean • Fresh • Shine</div>
           </div>
           <div class="col-md-6 text-md-end">
             <h4 class="fw-bold text-dark mb-1">NOTA ANTRIAN</h4>
@@ -56,7 +57,7 @@
         
         <div class="row mb-4 bg-light p-3 rounded-3 mx-0">
           <div class="col-sm-6 mb-2 mb-sm-0">
-            <span class="text-uppercase text-muted fs-2 fw-semibold">Pelanggan (Member)</span>
+            <span class="text-uppercase text-muted fs-2 fw-semibold">Pelanggan</span>
             <h6 class="fw-bold text-dark mb-0 mt-1"><?= esc($transaksi['member_nama']) ?></h6>
             <span class="text-muted fs-2"><?= esc($transaksi['member_telepon']) ?></span>
           </div>
@@ -116,21 +117,6 @@
               </tr>
             </tfoot>
           </table>
-        </div>
-
-        <div class="row">
-          <div class="col-md-6">
-            <div class="text-muted fs-2">Syarat & Ketentuan:</div>
-            <ol class="ps-3 text-muted fs-1 mb-0 mt-1">
-              <li>Pengambilan barang harus menyertakan Nota Antrian ini.</li>
-              <li>Komplain kerusakan atau kekurangan maksimal 24 jam setelah barang diambil.</li>
-              <li>Barang yang tidak diambil dalam 30 hari di luar tanggung jawab laundry.</li>
-            </ol>
-          </div>
-          <div class="col-md-6 text-center text-md-end mt-4 mt-md-0">
-            <p class="text-muted fs-2 mb-5">Hormat Kami, Kasir Outlet</p>
-            <p class="fw-bold text-dark fs-3 mb-0"><?= session()->get('username') ?? 'Sparkle Laundry' ?></p>
-          </div>
         </div>
 
       </div>
@@ -257,5 +243,26 @@
     }
   }
 </style>
+
+<script>
+function printPdf(url) {
+    // Buat iframe tersembunyi
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = url;
+    document.body.appendChild(iframe);
+    
+    // Tunggu PDF ter-load, lalu cetak
+    iframe.onload = function() {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        
+        // Bersihkan iframe setelah 3 detik
+        setTimeout(() => {
+            document.body.removeChild(iframe);
+        }, 3000);
+    };
+}
+</script>
 
 <?= $this->endSection() ?>

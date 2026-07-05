@@ -27,13 +27,28 @@ class Auth extends BaseController
 
     public function attemptLogin()
     {
+        // Validasi menggunakan CI4 Validation Library
+        $rules = [
+            'username' => [
+                'rules'  => 'required',
+                'errors' => [
+                    'required' => 'Username wajib diisi.'
+                ]
+            ],
+            'password' => [
+                'rules'  => 'required',
+                'errors' => [
+                    'required' => 'Password wajib diisi.'
+                ]
+            ]
+        ];
+
+        if (!$this->validate($rules)) {
+            return redirect()->back()->withInput()->with('validation', $this->validator->getErrors());
+        }
+
         $username = $this->request->getPost('username');
         $password = $this->request->getPost('password');
-
-        
-        if (empty($username) || empty($password)) {
-            return redirect()->back()->withInput()->with('error', 'Username dan password wajib diisi.');
-        }
 
         
         $user = $this->userModel->where('username', $username)->first();

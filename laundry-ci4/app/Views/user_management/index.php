@@ -74,9 +74,17 @@
                 </td>
                 <td class="border-bottom-0 text-center">
                   <div class="d-flex align-items-center justify-content-center gap-2">
-                    <a href="<?= base_url('user-management/edit/' . $item['id']) ?>" class="btn btn-sm btn-outline-warning d-flex align-items-center justify-content-center p-2" title="Edit">
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-warning d-flex align-items-center justify-content-center p-2 btn-edit" 
+                            data-id="<?= $item['id'] ?>"
+                            data-username="<?= esc($item['username']) ?>"
+                            data-email="<?= esc($item['email']) ?>"
+                            data-role="<?= esc($item['role']) ?>"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#editUserModal" 
+                            title="Edit">
                       <iconify-icon icon="solar:pen-bold-duotone" class="fs-4"></iconify-icon>
-                    </a>
+                    </button>
                     
                     
                     <?php if ($item['id'] != session()->get('user_id')) : ?>
@@ -214,9 +222,62 @@
     </div>
   </div>
 </div>
+<!-- Modal Edit User -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-3">
+      <div class="modal-header border-bottom-0 pb-0">
+        <h5 class="modal-title fw-bold text-dark" id="editUserModalLabel">Edit User Hak Akses</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="" method="POST" id="editUserForm">
+        <?= csrf_field() ?>
+        <div class="modal-body">
+          
+          <div class="mb-3">
+            <label for="username_edit" class="form-label fw-semibold text-dark">Nama Pengguna (Username) <span class="text-danger">*</span></label>
+            <input type="text" name="username" class="form-control" id="username_edit" required>
+          </div>
+
+          
+          <div class="mb-3">
+            <label for="email_edit" class="form-label fw-semibold text-dark">Alamat Email <span class="text-danger">*</span></label>
+            <input type="email" name="email" class="form-control" id="email_edit" required>
+          </div>
+
+          <div class="row">
+            
+            <div class="col-md-6 mb-3">
+              <label for="password_edit" class="form-label fw-semibold text-dark">Kata Sandi Baru</label>
+              <input type="password" name="password" class="form-control" id="password_edit" placeholder="Isi hanya jika diubah">
+            </div>
+
+            
+            <div class="col-md-6 mb-0">
+              <label for="role_edit" class="form-label fw-semibold text-dark">Hak Akses (Role) <span class="text-danger">*</span></label>
+              <select name="role" id="role_edit" class="form-select" required>
+                <option value="" disabled>-- Pilih Hak Akses --</option>
+                <option value="kasir">Kasir / Operator</option>
+                <option value="admin">Administrator</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-top-0 pt-0">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-warning d-flex align-items-center gap-1 text-white">
+            <iconify-icon icon="solar:diskette-bold-duotone" class="fs-5"></iconify-icon>
+            Perbarui User
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
+    // Delete handler
     const deleteButtons = document.querySelectorAll('.btn-delete');
     const deleteForm = document.getElementById('deleteForm');
     const deleteUserName = document.getElementById('deleteUserName');
@@ -231,10 +292,45 @@
       });
     });
 
+    // Edit handler
+    const editButtons = document.querySelectorAll('.btn-edit');
+    const editForm = document.getElementById('editUserForm');
+    const usernameEdit = document.getElementById('username_edit');
+    const emailEdit = document.getElementById('email_edit');
+    const passwordEdit = document.getElementById('password_edit');
+    const roleEdit = document.getElementById('role_edit');
+
+    editButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const id = this.getAttribute('data-id');
+        const username = this.getAttribute('data-username');
+        const email = this.getAttribute('data-email');
+        const role = this.getAttribute('data-role');
+
+        usernameEdit.value = username;
+        emailEdit.value = email;
+        passwordEdit.value = ''; // Reset password field for security
+        roleEdit.value = role;
+
+        editForm.setAttribute('action', '<?= base_url('user-management/update') ?>/' + id);
+      });
+    });
+
     // Auto-show add modal on validation error
     <?php if (session()->getFlashdata('modal_open') === 'tambah_user') : ?>
       const myModal = new bootstrap.Modal(document.getElementById('tambahUserModal'));
       myModal.show();
+    <?php endif; ?>
+
+    // Auto-show edit modal on validation error
+    <?php if (session()->getFlashdata('modal_open') === 'edit_user') : ?>
+      const editModal = new bootstrap.Modal(document.getElementById('editUserModal'));
+      const failedId = '<?= session()->getFlashdata('edit_id') ?>';
+      const button = document.querySelector(`.btn-edit[data-id="${failedId}"]`);
+      if (button) {
+        button.click();
+      }
+      editModal.show();
     <?php endif; ?>
   });
 </script>

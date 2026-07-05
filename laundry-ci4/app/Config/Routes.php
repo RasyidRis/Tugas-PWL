@@ -10,6 +10,7 @@ $routes->get('logout', 'Auth::logout');
 
 $routes->group('layanan', function ($routes) {
     $routes->get('/', 'LayananLaundry::index');
+    $routes->get('pdf', 'LayananLaundry::cetakPdf');
     $routes->get('tambah', 'LayananLaundry::tambah');
     $routes->post('simpan', 'LayananLaundry::simpan');
     $routes->get('edit/(:num)', 'LayananLaundry::edit/$1');
@@ -31,8 +32,13 @@ $routes->group('antrian', function ($routes) {
     $routes->get('tambah', 'Antrian::tambah');
     $routes->post('simpan', 'Antrian::simpan');
     $routes->get('detail/(:num)', 'Antrian::detail/$1');
+    $routes->get('pdf/(:num)', 'Antrian::notaPdf/$1');
     $routes->post('update-status/(:num)', 'Antrian::updateStatus/$1');
     $routes->post('bayar/(:num)', 'Antrian::bayar/$1');
+    $routes->post('cart/add', 'Antrian::cartAdd');
+    $routes->post('cart/update', 'Antrian::cartUpdate');
+    $routes->post('cart/remove', 'Antrian::cartRemove');
+    $routes->post('cart/clear', 'Antrian::cartClear');
 });
 
 $routes->group('proses-cuci', function ($routes) {

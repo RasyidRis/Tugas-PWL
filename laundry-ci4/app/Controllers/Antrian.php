@@ -6,6 +6,7 @@ use App\Models\TransaksiModel;
 use App\Models\TransaksiDetailModel;
 use App\Models\MemberModel;
 use App\Models\LayananLaundryModel;
+use CodeIgniterCart\Cart;
 use CodeIgniter\Exceptions\PageNotFoundException;
 
 class Antrian extends BaseController
@@ -14,6 +15,7 @@ class Antrian extends BaseController
     protected $transaksiDetailModel;
     protected $memberModel;
     protected $layananModel;
+    protected $cart;
 
     public function __construct()
     {
@@ -21,6 +23,9 @@ class Antrian extends BaseController
         $this->transaksiDetailModel = new TransaksiDetailModel();
         $this->memberModel = new MemberModel();
         $this->layananModel = new LayananLaundryModel();
+        $this->cart = new Cart();
+        // Izinkan nama produk dengan karakter Indonesia (spasi, huruf, tanda baca)
+        $this->cart->productNameSafe = false;
     }
 
     public function index()
@@ -29,7 +34,7 @@ class Antrian extends BaseController
         $db = \Config\Database::connect();
 
         $builder = $db->table('transaksi')
-                      ->select('transaksi.*, members.nama as member_nama, members.telepon as member_telepon')
+                      ->select('transaksi.*, members.nama as member_nama, members.telepon as member_telepon, members.alamat as member_alamat')
                       ->join('members', 'members.id = transaksi.member_id');
 
         if (!empty($keyword)) {
@@ -38,7 +43,7 @@ class Antrian extends BaseController
                     ->orLike('transaksi.status', $keyword);
         }
 
-        $transaksiList = $builder->orderBy('transaksi.created_at', 'DESC')->get()->getResultArray();
+        $transaksiList = $builder->orderBy('transaksi.no_antrian', 'DESC')->get()->getResultArray();
 
         foreach ($transaksiList as &$tx) {
             $details = $db->table('transaksi_detail')
@@ -71,12 +76,17 @@ class Antrian extends BaseController
 
     public function tambah()
     {
-        $members = $this->memberModel->orderBy('nama', 'ASC')->findAll();
-        $services = $this->layananModel->orderBy('nama_layanan', 'ASC')->findAll();
+        // Reset cart session when opening the Tambah Antrian page
+        $this->cart->destroy();
+
+        $memberModel = new \App\Models\MemberModel();
+        $layananModel = new \App\Models\LayananLaundryModel();
+
+        $services = $layananModel->orderBy('nama_layanan', 'ASC')->findAll();
 
         $data = [
             'title'    => 'Buat Antrian Baru - Clean • Fresh • Shine',
-            'members'  => $members,
+            'members'  => $memberModel->orderBy('nama', 'ASC')->findAll(),
             'services' => $services
         ];
 
@@ -86,11 +96,35 @@ class Antrian extends BaseController
     public function simpan()
     {
         $memberId = $this->request->getPost('member_id');
-        $layananIds = $this->request->getPost('layanan_id');
-        $jumlahs = $this->request->getPost('jumlah');
         $bayar = intval($this->request->getPost('bayar') ?? 0);
 
-        if (empty($memberId) || empty($layananIds)) {
+        // Support Modal Form POST data directly into Cart Session
+        $layananIds = $this->request->getPost('layanan_id') ?? [];
+        $jumlahs = $this->request->getPost('jumlah') ?? [];
+
+        if (!empty($layananIds)) {
+            $this->cart->destroy();
+            $layananModel = new \App\Models\LayananLaundryModel();
+            for ($i = 0; $i < count($layananIds); $i++) {
+                $layananId = $layananIds[$i];
+                $qty = floatval($jumlahs[$i] ?? 0);
+                if ($qty > 0 && !empty($layananId)) {
+                    $layanan = $layananModel->find($layananId);
+                    if ($layanan) {
+                        $this->cart->insert([
+                            'id'    => (string)$layanan['id'],
+                            'name'  => $layanan['nama_layanan'],
+                            'price' => $layanan['harga'],
+                            'qty'   => $qty,
+                        ]);
+                    }
+                }
+            }
+        }
+
+        $cartItems = $this->cart->contents();
+
+        if (empty($memberId) || empty($cartItems)) {
             return redirect()->back()->withInput()->with('error', 'Silakan pilih pelanggan dan minimal satu jenis layanan laundry.');
         }
 
@@ -101,6 +135,7 @@ class Antrian extends BaseController
         if ($memberId === 'new_customer') {
             $customerName = trim($this->request->getPost('customer_name') ?? '');
             $customerPhone = trim($this->request->getPost('customer_phone') ?? '');
+            $customerAddress = trim($this->request->getPost('customer_address') ?? '');
 
             if (empty($customerName)) {
                 $db->transRollback();
@@ -110,7 +145,7 @@ class Antrian extends BaseController
             $db->table('members')->insert([
                 'nama'       => $customerName,
                 'telepon'    => $customerPhone,
-                'alamat'     => '-',
+                'alamat'     => !empty($customerAddress) ? $customerAddress : '-',
                 'poin'       => 0,
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s')
@@ -134,21 +169,15 @@ class Antrian extends BaseController
         $noAntrian = "Q-{$nextNum}";
 
         
-        $totalHarga = 0;
+        $totalHarga = $this->cart->total();
         $detailItems = [];
+        $layananModel2 = new \App\Models\LayananLaundryModel();
 
-        foreach ($layananIds as $index => $layananId) {
-            $layanan = $this->layananModel->find($layananId);
-            if (!$layanan) continue;
-
-            $qty = floatval($jumlahs[$index]);
-            $subtotal = intval($layanan['harga'] * $qty);
-            $totalHarga += $subtotal;
-
+        foreach ($cartItems as $item) {
             $detailItems[] = [
-                'layanan_id' => $layananId,
-                'jumlah'     => $qty,
-                'subtotal'   => $subtotal
+                'layanan_id' => $item['id'],
+                'jumlah'     => $item['qty'],
+                'subtotal'   => intval($item['price'] * $item['qty'])
             ];
         }
 
@@ -205,7 +234,78 @@ class Antrian extends BaseController
         }
 
         $db->transCommit();
+
+        // Clear cart after success
+        $this->cart->destroy();
+
         return redirect()->to('antrian/detail/' . $transaksiId)->with('success', 'Antrian baru berhasil dibuat!');
+    }
+
+    public function cartAdd()
+    {
+        $layananId = $this->request->getPost('layanan_id');
+        $qty = floatval($this->request->getPost('qty') ?? 1);
+
+        $layanan = $this->layananModel->find($layananId);
+        if (!$layanan) {
+            return $this->response->setJSON([
+                'status'  => 'error',
+                'message' => 'Layanan laundry tidak ditemukan.'
+            ]);
+        }
+
+        $this->cart->insert([
+            'id'    => (string)$layanan['id'],
+            'name'  => $layanan['nama_layanan'],
+            'price' => $layanan['harga'],
+            'qty'   => $qty,
+        ]);
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'total'  => $this->cart->total(),
+            'items'  => array_values($this->cart->contents())
+        ]);
+    }
+
+    public function cartUpdate()
+    {
+        $layananId = $this->request->getPost('layanan_id');
+        $qty = floatval($this->request->getPost('qty'));
+        $rowid = md5((string)$layananId);
+
+        $this->cart->update(['rowid' => $rowid, 'qty' => $qty]);
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'total'  => $this->cart->total(),
+            'items'  => array_values($this->cart->contents())
+        ]);
+    }
+
+    public function cartRemove()
+    {
+        $layananId = $this->request->getPost('layanan_id');
+        $rowid = md5((string)$layananId);
+
+        $this->cart->remove($rowid);
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'total'  => $this->cart->total(),
+            'items'  => array_values($this->cart->contents())
+        ]);
+    }
+
+    public function cartClear()
+    {
+        $this->cart->destroy();
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'total'  => 0,
+            'items'  => []
+        ]);
     }
 
     public function detail($id)
@@ -235,6 +335,44 @@ class Antrian extends BaseController
         ];
 
         return view('antrian/detail', $data);
+    }
+
+    public function notaPdf($id)
+    {
+        $db = \Config\Database::connect();
+        
+        $transaksi = $db->table('transaksi')
+                        ->select('transaksi.*, members.nama as member_nama, members.telepon as member_telepon, members.alamat as member_alamat')
+                        ->join('members', 'members.id = transaksi.member_id')
+                        ->where('transaksi.id', $id)
+                        ->get()->getRowArray();
+
+        if (!$transaksi) {
+            throw PageNotFoundException::forPageNotFound("Antrian dengan ID {$id} tidak ditemukan.");
+        }
+
+        $details = $db->table('transaksi_detail')
+                     ->select('transaksi_detail.*, layanan_laundry.nama_layanan, layanan_laundry.harga as harga_satuan, layanan_laundry.tipe_satuan, layanan_laundry.estimasi_waktu')
+                     ->join('layanan_laundry', 'layanan_laundry.id = transaksi_detail.layanan_id')
+                     ->where('transaksi_detail.transaksi_id', $id)
+                     ->get()->getResultArray();
+
+        $data = [
+            'transaksi' => $transaksi,
+            'details'   => $details
+        ];
+
+        $html = view('antrian/nota_pdf', $data);
+
+        $dompdf = new \Dompdf\Dompdf();
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        $dompdf->stream("nota-laundry-" . $transaksi['no_antrian'] . ".pdf", [
+            "Attachment" => false
+        ]);
+        exit;
     }
 
     public function updateStatus($id)

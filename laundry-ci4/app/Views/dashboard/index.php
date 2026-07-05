@@ -55,7 +55,7 @@ $formattedDate = $dayNameName . ', ' . date('d') . ' ' . $monthNameName . ' ' . 
 
 <div class="row">
   
-  <div class="col-sm-6 col-xl-3 mb-4">
+  <div class="col-sm-6 col-xl-4 mb-4">
     <div class="card overflow-hidden rounded-3 shadow-sm border-0 bg-white h-100">
       <div class="card-body p-4">
         <div class="d-flex align-items-center gap-3">
@@ -72,7 +72,7 @@ $formattedDate = $dayNameName . ', ' . date('d') . ' ' . $monthNameName . ' ' . 
   </div>
 
   
-  <div class="col-sm-6 col-xl-3 mb-4">
+  <div class="col-sm-6 col-xl-4 mb-4">
     <div class="card overflow-hidden rounded-3 shadow-sm border-0 bg-white h-100">
       <div class="card-body p-4">
         <div class="d-flex align-items-center gap-3">
@@ -89,7 +89,7 @@ $formattedDate = $dayNameName . ', ' . date('d') . ' ' . $monthNameName . ' ' . 
   </div>
 
   
-  <div class="col-sm-6 col-xl-3 mb-4">
+  <div class="col-sm-6 col-xl-4 mb-4">
     <div class="card overflow-hidden rounded-3 shadow-sm border-0 bg-white h-100">
       <div class="card-body p-4">
         <div class="d-flex align-items-center gap-3">
@@ -99,23 +99,6 @@ $formattedDate = $dayNameName . ', ' . date('d') . ' ' . $monthNameName . ' ' . 
           <div>
             <span class="text-muted fs-2 text-uppercase fw-semibold" style="letter-spacing: 0.5px;">Omset Hari Ini</span>
             <h3 class="fw-bold mb-0 text-dark fs-6 mt-1">Rp<?= number_format($omsetHariIni, 0, ',', '.') ?></h3>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  
-  <div class="col-sm-6 col-xl-3 mb-4">
-    <div class="card overflow-hidden rounded-3 shadow-sm border-0 bg-white h-100">
-      <div class="card-body p-4">
-        <div class="d-flex align-items-center gap-3">
-          <div class="p-3 bg-secondary-subtle rounded-3 text-secondary d-inline-flex">
-            <iconify-icon icon="solar:users-group-two-rounded-bold-duotone" class="fs-8"></iconify-icon>
-          </div>
-          <div>
-            <span class="text-muted fs-2 text-uppercase fw-semibold" style="letter-spacing: 0.5px;">Total Member</span>
-            <h3 class="fw-bold mb-0 text-dark fs-7 mt-1"><?= $totalMember ?></h3>
           </div>
         </div>
       </div>
@@ -138,7 +121,7 @@ $formattedDate = $dayNameName . ', ' . date('d') . ' ' . $monthNameName . ' ' . 
             <thead class="bg-light text-dark fs-3">
               <tr>
                 <th class="border-bottom-0"><h6 class="fw-semibold mb-0 fs-3">NO</h6></th>
-                <th class="border-bottom-0"><h6 class="fw-semibold mb-0 fs-3">MEMBER</h6></th>
+                <th class="border-bottom-0"><h6 class="fw-semibold mb-0 fs-3">PELANGGAN</h6></th>
                 <th class="border-bottom-0 text-center"><h6 class="fw-semibold mb-0 fs-3">STATUS</h6></th>
                 <th class="border-bottom-0 text-center"><h6 class="fw-semibold mb-0 fs-3">AKSI</h6></th>
               </tr>
@@ -242,19 +225,7 @@ $formattedDate = $dayNameName . ', ' . date('d') . ' ' . $monthNameName . ' ' . 
       </div>
 
       
-      <div class="col-12 mb-4">
-        <div class="card text-white border-0 shadow-sm rounded-3 overflow-hidden bg-primary position-relative" style="background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%) !important;">
-          <div class="card-body p-4 position-relative" style="z-index: 2;">
-            <h4 class="fw-bold text-white mb-2">Member Baru?</h4>
-            <p class="text-white-50 fs-3 mb-4">Daftarkan pelanggan baru untuk mendapatkan poin loyalty.</p>
-            <a href="<?= base_url('member/tambah') ?>" class="btn btn-white fw-bold px-4 py-2 fs-3 rounded-pill bg-white border-0" style="color: #0f766e !important;">Tambah Member</a>
-          </div>
-          
-          <div class="position-absolute" style="right: -20px; bottom: -30px; opacity: 0.15; z-index: 1;">
-            <iconify-icon icon="solar:users-group-two-rounded-bold" class="text-white" style="font-size: 180px;"></iconify-icon>
-          </div>
-        </div>
-      </div>
+
     </div>
   </div>
 </div>

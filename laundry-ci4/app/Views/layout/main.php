@@ -121,17 +121,26 @@
     /* Sidebar Specific Re-theme (White BG with Green accents) */
     .sidebar-nav ul .sidebar-item .sidebar-link {
       color: #5a6a85 !important;
+      font-size: 15px !important;
+      font-weight: 500 !important;
+      padding: 10px 16px !important;
+      border-radius: 8px !important;
+      margin-bottom: 4px !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 12px !important;
     }
     .sidebar-nav ul .sidebar-item .sidebar-link iconify-icon,
     .sidebar-nav ul .sidebar-item .sidebar-link i {
       color: #5a6a85 !important;
+      font-size: 21px !important;
     }
     
     /* Active Link in Sidebar */
     .sidebar-nav ul .sidebar-item .sidebar-link.active {
       background-color: #ecfdf5 !important;
       color: #059669 !important;
-      font-weight: 600;
+      font-weight: 600 !important;
     }
     .sidebar-nav ul .sidebar-item .sidebar-link.active iconify-icon,
     .sidebar-nav ul .sidebar-item .sidebar-link.active i {
@@ -151,6 +160,11 @@
     /* Sidebar Small Caps Headers */
     .sidebar-nav .nav-small-cap {
       color: #7c8fac !important;
+      font-size: 11.5px !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.5px !important;
+      margin-top: 16px !important;
+      margin-bottom: 8px !important;
     }
     .sidebar-nav .nav-small-cap-icon {
       color: #7c8fac !important;
@@ -172,6 +186,13 @@
     }
     .page-link:hover {
       color: #047857 !important;
+    }
+    
+    /* Widen body wrapper container to avoid excess empty side space */
+    .body-wrapper .container-fluid {
+      max-width: 100% !important;
+      padding-left: 32px !important;
+      padding-right: 32px !important;
     }
   </style>
 </head>
@@ -232,16 +253,7 @@
 
             <li class="nav-small-cap">
               <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
-              <span class="hide-menu">MEMBER & SERVICES</span>
-            </li>
-
-            <li class="sidebar-item">
-              <a class="sidebar-link <?= (url_is('member') || url_is('member/*')) ? 'active' : '' ?>" href="<?= base_url('member') ?>" aria-expanded="false">
-                <span>
-                  <iconify-icon icon="solar:users-group-two-rounded-line-duotone" class="fs-6"></iconify-icon>
-                </span>
-                <span class="hide-menu">Member</span>
-              </a>
+              <span class="hide-menu">SERVICES & LAYANAN</span>
             </li>
 
             <li class="sidebar-item">
@@ -253,9 +265,10 @@
               </a>
             </li>
             
+            <?php if (session()->get('role') === 'admin') : ?>
             <li class="nav-small-cap">
               <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
-              <span class="hide-menu">FINANCE & ADMIN</span>
+              <span class="hide-menu">FINANCE & USER</span>
             </li>
             
             <li class="sidebar-item">
@@ -275,6 +288,7 @@
                 <span class="hide-menu">User Management</span>
               </a>
             </li>
+            <?php endif; ?>
           </ul>
         </nav>
         

@@ -16,7 +16,7 @@
   </div>
 <?php endif; ?>
 
-<form action="<?= base_url('antrian/simpan') ?>" method="POST" id="orderForm">
+<form action="<?= parse_url(site_url('antrian/simpan'), PHP_URL_PATH) ?>" method="POST" id="orderForm">
   <?= csrf_field() ?>
 
   <div class="row">
@@ -30,36 +30,24 @@
               <iconify-icon icon="solar:user-rounded-bold-duotone" class="fs-6"></iconify-icon>
             </div>
             <div>
-              <h5 class="card-title fw-bold text-dark mb-0">1. Pilih Pelanggan (Member)</h5>
+              <h5 class="card-title fw-bold text-dark mb-0">1. Data Pelanggan</h5>
             </div>
           </div>
 
-          <div class="mb-3">
-            <label for="member_id" class="form-label fw-semibold text-dark">Nama Pelanggan <span class="text-danger">*</span></label>
-            <select name="member_id" id="member_id" class="form-select" required>
-              <option value="" disabled selected>-- Pilih Member --</option>
-              <option value="new_customer" <?= old('member_id') == 'new_customer' ? 'selected' : '' ?>>+ Pelanggan Baru (Non-Member)</option>
-              <?php foreach ($members as $m) : ?>
-                <option value="<?= $m['id'] ?>" <?= old('member_id') == $m['id'] ? 'selected' : '' ?>>
-                  <?= esc($m['nama']) ?> (<?= esc($m['telepon']) ?>) - Poin: <?= esc($m['poin']) ?>
-                </option>
-              <?php endforeach; ?>
-            </select>
-            <div class="form-text text-muted mt-2">
-              Pelanggan belum terdaftar? <a href="<?= base_url('member/tambah') ?>" class="text-primary fw-semibold">Daftarkan Member Baru</a>
-            </div>
-          </div>
+          <input type="hidden" name="member_id" value="new_customer">
 
-          
-          <div id="new_customer_fields" class="p-3 bg-light rounded-3 mb-3 d-none border">
-            <h6 class="fw-bold text-dark mb-3"><iconify-icon icon="solar:user-plus-bold-duotone" class="text-primary align-middle me-1"></iconify-icon> Data Pelanggan Baru</h6>
+          <div id="new_customer_fields" class="p-3 bg-light rounded-3 mb-3 border">
             <div class="mb-3">
               <label for="customer_name" class="form-label fw-semibold text-dark">Nama Lengkap <span class="text-danger">*</span></label>
-              <input type="text" name="customer_name" id="customer_name" class="form-control" placeholder="Contoh: Budi Santoso" value="<?= old('customer_name') ?>">
+              <input type="text" name="customer_name" id="customer_name" class="form-control" placeholder="Contoh: Budi Santoso" value="<?= old('customer_name') ?>" required>
             </div>
-            <div class="mb-0">
+            <div class="mb-3">
               <label for="customer_phone" class="form-label fw-semibold text-dark">No. Telepon / HP</label>
               <input type="text" name="customer_phone" id="customer_phone" class="form-control" placeholder="Contoh: 081234567890" value="<?= old('customer_phone') ?>">
+            </div>
+            <div class="mb-0">
+              <label for="customer_address" class="form-label fw-semibold text-dark">Alamat</label>
+              <textarea name="customer_address" id="customer_address" class="form-control" rows="2" placeholder="Contoh: Jl. Merdeka No. 10"><?= old('customer_address') ?></textarea>
             </div>
           </div>
         </div>
@@ -150,58 +138,94 @@
     const textTotal = document.getElementById('textTotal');
     const bayarInput = document.getElementById('bayar');
 
-    // New Customer Handler
-    const memberSelect = document.getElementById('member_id');
-    const newCustomerFields = document.getElementById('new_customer_fields');
-    const customerNameInput = document.getElementById('customer_name');
 
-    function toggleNewCustomerFields() {
-      if (memberSelect.value === 'new_customer') {
-        newCustomerFields.classList.remove('d-none');
-        customerNameInput.required = true;
-      } else {
-        newCustomerFields.classList.add('d-none');
-        customerNameInput.required = false;
-      }
-    }
 
-    memberSelect.addEventListener('change', toggleNewCustomerFields);
-    toggleNewCustomerFields();
+    let localCart = [];
 
-    // Add first row by default
-    addNewRow();
+    // Render cart from server items
+    function renderCart(items, total) {
+      cartItems.innerHTML = '';
+      localCart = items;
 
-    addRowBtn.addEventListener('click', function() {
-      addNewRow();
-    });
-
-    function toggleCartMessage() {
-      if (cartItems.children.length === 0) {
+      if (items.length === 0) {
         emptyCartMessage.classList.remove('d-none');
       } else {
         emptyCartMessage.classList.add('d-none');
       }
+
+      items.forEach(item => {
+        const row = document.createElement('tr');
+        row.id = `row-${item.id}`;
+
+        let options = `<option value="" disabled>-- Pilih Layanan --</option>`;
+        services.forEach(s => {
+          const selected = (s.id == item.id) ? 'selected' : '';
+          options += `<option value="${s.id}" data-price="${s.harga}" data-unit="${s.tipe_satuan}" ${selected}>${s.nama_layanan} (Rp${Number(s.harga).toLocaleString('id-ID')}/${s.tipe_satuan})</option>`;
+        });
+
+        row.innerHTML = `
+          <td>
+            <select class="form-select service-select" disabled>
+              ${options}
+            </select>
+          </td>
+          <td>
+            <div class="input-group">
+              <input type="number" class="form-control qty-input" value="${item.qty}" min="0.01" step="0.01" data-id="${item.id}" required>
+              <span class="input-group-text bg-light text-muted unit-label">${item.unit}</span>
+            </div>
+          </td>
+          <td>
+            <span class="fw-bold text-dark subtotal-label" data-subtotal="${item.price * item.qty}">Rp${Math.round(item.price * item.qty).toLocaleString('id-ID')}</span>
+          </td>
+          <td class="text-center">
+            <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row" data-id="${item.id}">
+              <iconify-icon icon="solar:trash-bin-trash-bold" class="fs-4"></iconify-icon>
+            </button>
+          </td>
+        `;
+
+        cartItems.appendChild(row);
+
+        // Bind events
+        const qtyInput = row.querySelector('.qty-input');
+        qtyInput.addEventListener('change', function() {
+          updateCartItem(item.id, qtyInput.value);
+        });
+
+        const removeBtn = row.querySelector('.btn-remove-row');
+        removeBtn.addEventListener('click', function() {
+          removeCartItem(item.id);
+        });
+      });
+
+      textTotal.textContent = `Rp${Math.round(total).toLocaleString('id-ID')}`;
+      bayarInput.max = total;
     }
 
+    // Add temp row
     function addNewRow() {
       const rowIndex = Date.now();
       const row = document.createElement('tr');
-      row.id = `row-${rowIndex}`;
+      row.id = `row-temp-${rowIndex}`;
       
       let options = '<option value="" disabled selected>-- Pilih Layanan --</option>';
       services.forEach(s => {
-        options += `<option value="${s.id}" data-price="${s.harga}" data-unit="${s.tipe_satuan}">${s.nama_layanan} (Rp${Number(s.harga).toLocaleString('id-ID')}/${s.tipe_satuan})</option>`;
+        const inCart = localCart.some(item => item.id == s.id);
+        if (!inCart) {
+          options += `<option value="${s.id}">${s.nama_layanan} (Rp${Number(s.harga).toLocaleString('id-ID')}/${s.tipe_satuan})</option>`;
+        }
       });
 
       row.innerHTML = `
         <td>
-          <select name="layanan_id[]" class="form-select service-select" required>
+          <select class="form-select temp-service-select" required>
             ${options}
           </select>
         </td>
         <td>
           <div class="input-group">
-            <input type="number" name="jumlah[]" class="form-control qty-input" value="1.00" min="0.01" step="0.01" required disabled>
+            <input type="number" class="form-control qty-input" value="1.00" min="0.01" step="0.01" required disabled>
             <span class="input-group-text bg-light text-muted unit-label">-</span>
           </div>
         </td>
@@ -209,70 +233,83 @@
           <span class="fw-bold text-dark subtotal-label">Rp0</span>
         </td>
         <td class="text-center">
-          <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row">
+          <button type="button" class="btn btn-sm btn-outline-danger btn-remove-temp-row">
             <iconify-icon icon="solar:trash-bin-trash-bold" class="fs-4"></iconify-icon>
           </button>
         </td>
       `;
 
       cartItems.appendChild(row);
-      toggleCartMessage();
-      initRowEvents(row);
-    }
+      emptyCartMessage.classList.add('d-none');
 
-    function initRowEvents(row) {
-      const select = row.querySelector('.service-select');
-      const qtyInput = row.querySelector('.qty-input');
-      const unitLabel = row.querySelector('.unit-label');
-      const subtotalLabel = row.querySelector('.subtotal-label');
-      const removeBtn = row.querySelector('.btn-remove-row');
-
+      const select = row.querySelector('.temp-service-select');
       select.addEventListener('change', function() {
-        const option = select.options[select.selectedIndex];
-        const price = Number(option.getAttribute('data-price'));
-        const unit = option.getAttribute('data-unit');
-
-        qtyInput.disabled = false;
-        unitLabel.textContent = unit;
-        
-        calculateRowSubtotal();
+        addCartItem(select.value, 1);
       });
 
-      qtyInput.addEventListener('input', function() {
-        calculateRowSubtotal();
-      });
-
-      removeBtn.addEventListener('click', function() {
+      row.querySelector('.btn-remove-temp-row').addEventListener('click', function() {
         row.remove();
-        toggleCartMessage();
-        calculateCartTotal();
+        if (cartItems.children.length === 0) {
+          emptyCartMessage.classList.remove('d-none');
+        }
       });
-
-      function calculateRowSubtotal() {
-        const option = select.options[select.selectedIndex];
-        if (!option || option.value === '') return;
-
-        const price = Number(option.getAttribute('data-price'));
-        const qty = Number(qtyInput.value);
-        const subtotal = Math.round(price * qty);
-
-        subtotalLabel.textContent = `Rp${subtotal.toLocaleString('id-ID')}`;
-        subtotalLabel.setAttribute('data-subtotal', subtotal);
-        calculateCartTotal();
-      }
     }
 
-    function calculateCartTotal() {
-      let total = 0;
-      const subtotalLabels = cartItems.querySelectorAll('.subtotal-label');
-      subtotalLabels.forEach(label => {
-        const val = Number(label.getAttribute('data-subtotal') ?? 0);
-        total += val;
-      });
+    addRowBtn.addEventListener('click', addNewRow);
 
-      textTotal.textContent = `Rp${total.toLocaleString('id-ID')}`;
-      bayarInput.max = total; // Paid cannot exceed total bill
+    function addCartItem(layananId, qty) {
+      const formData = new FormData();
+      formData.append('layanan_id', layananId);
+      formData.append('qty', qty);
+
+      fetch(window.location.origin + '<?= parse_url(site_url('antrian/cart/add'), PHP_URL_PATH) ?>', {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'success') {
+          renderCart(data.items, data.total);
+        } else {
+          alert(data.message || 'Gagal menambahkan layanan.');
+        }
+      });
     }
+
+    function updateCartItem(layananId, qty) {
+      const formData = new FormData();
+      formData.append('layanan_id', layananId);
+      formData.append('qty', qty);
+
+      fetch(window.location.origin + '<?= parse_url(site_url('antrian/cart/update'), PHP_URL_PATH) ?>', {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'success') {
+          renderCart(data.items, data.total);
+        }
+      });
+    }
+
+    function removeCartItem(layananId) {
+      const formData = new FormData();
+      formData.append('layanan_id', layananId);
+
+      fetch(window.location.origin + '<?= parse_url(site_url('antrian/cart/remove'), PHP_URL_PATH) ?>', {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'success') {
+          renderCart(data.items, data.total);
+        }
+      });
+    }
+
+    addNewRow();
   });
 </script>
 

@@ -8,6 +8,7 @@ class AppSeeder extends Seeder
 {
     public function run()
     {
+        date_default_timezone_set('UTC');
         // 1. Seed Users
         $db = \Config\Database::connect();
         $db->table('users')->truncate();
@@ -58,7 +59,6 @@ class AppSeeder extends Seeder
         $db->table('transaksi_detail')->truncate();
         $db->table('keuangan')->truncate();
 
-        // Let's create transactions and their details
         // Active Queue 1: Agus Hartono
         $db->table('transaksi')->insert([
             'no_antrian' => 'Q-001',

@@ -83,6 +83,7 @@
             
             <div class="text-center mb-4">
               <img src="<?= base_url('assets/images/logos/laundrylogo.png') ?>" alt="Sparkle Laundry Logo" class="img-fluid mb-2" style="max-height: 220px; object-fit: contain;">
+              <h3 class="fw-bold text-dark mb-0">Sparkle Laundry</h3>
               <p class="text-muted fs-3">Laundry Management System</p>
             </div>
 
@@ -101,21 +102,28 @@
               </div>
             <?php endif; ?>
 
-            <form action="<?= base_url('login') ?>" method="POST">
+            <?php $validation = session()->getFlashdata('validation') ?? []; ?>
+            <form action="<?= base_url('login') ?>" method="POST" novalidate>
               <div class="mb-3">
                 <label for="username" class="form-label">Nama Pengguna (Username)</label>
                 <div class="input-group">
                   <span class="input-group-text"><iconify-icon icon="solar:user-rounded-line-duotone"></iconify-icon></span>
-                  <input type="text" class="form-control" id="username" name="username" placeholder="Contoh: admin" value="<?= old('username') ?>" required>
+                  <input type="text" class="form-control <?= isset($validation['username']) ? 'is-invalid' : '' ?>" id="username" name="username" placeholder="Contoh: admin" value="<?= old('username') ?>">
                 </div>
+                <?php if (isset($validation['username'])) : ?>
+                  <div class="text-danger fs-2 mt-1 px-1"><?= $validation['username'] ?></div>
+                <?php endif; ?>
               </div>
 
               <div class="mb-4">
                 <label for="password" class="form-label">Kata Sandi</label>
                 <div class="input-group">
                   <span class="input-group-text"><iconify-icon icon="solar:lock-password-line-duotone"></iconify-icon></span>
-                  <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" required>
+                  <input type="password" class="form-control <?= isset($validation['password']) ? 'is-invalid' : '' ?>" id="password" name="password" placeholder="••••••••">
                 </div>
+                <?php if (isset($validation['password'])) : ?>
+                  <div class="text-danger fs-2 mt-1 px-1"><?= $validation['password'] ?></div>
+                <?php endif; ?>
               </div>
 
               <button type="submit" class="btn btn-primary w-100 py-2.5 shadow-sm">Masuk Sistem</button>
